@@ -32,7 +32,7 @@ def queue_test2(stop_event):
 def test_one_event_manager():
     event_manager.register(fake_test)
     event_manager.trigger_all()
-    for _ in xrange(5):
+    for _ in range(5):
         gevent.sleep(1)
     event_manager.set_events()
 

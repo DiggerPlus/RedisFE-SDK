@@ -91,7 +91,6 @@ class EventManager(object):
         self.events[func].trigger()
 
     def trigger_all(self):
-        print self.events
         """Trigger all func in manager to run"""
         for func in self.events:
             self.trigger(func)

@@ -13,7 +13,7 @@ def _get_version():
     return re.sub(r'(\'|"|\s+)', '', ver_info_str).replace(',', '.')
 
 setup(
-    name='dpq',
+    name='RedisFE-SDK',
     version=_get_version(),
     url='https://github.com/DiggerPlus/RedisFE-SDK',
     license='MIT',
@@ -23,5 +23,9 @@ setup(
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
     zip_safe=False,
-    platforms='any'
+    platforms='any',
+    install_requires=[
+        'gevent==1.1.2',
+        'redis==2.10.5'
+    ]
 )

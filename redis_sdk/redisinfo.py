@@ -4,6 +4,9 @@ import urlparse
 import redis
 
 
+COMMANDS = ['get', 'set', 'mget', 'mset', 'pipline']
+
+
 class RedisInfo(object):
     """Redis info object.
 
@@ -21,7 +24,7 @@ class RedisInfo(object):
         self.dsn = urlparse.urlparse(dsn)
         self.password = password
         self.redis_connection_kwargs = redis_connection_kwargs
-        self.client = None
+        self.connections = []
 
     @property
     def host(self):
@@ -42,15 +45,39 @@ class RedisInfo(object):
 
     @property
     def info(self):
-        if self.client is None:
-            self.client = redis.StrictRedis(
-                host=self.host, port=self.port, db=self.db,
-                password=self.password, **self.redis_connection_kwargs)
-        info = self.client.info()
+        """Redis server info"""
+        connection = self._get_connection()
+        info = connection.info()
         for key in info:
             setattr(self, key, info[key])
+        self._put_connection_back(connection)
         return self
+
+    def _produce_connection(self):
+        connection = redis.StrictRedis(
+            host=self.host, port=self.port, db=self.db,
+            password=self.password, **self.redis_connection_kwargs)
+        self.connections.append(connection)
+        return connection
+
+    def _get_connection(self):
+        try:
+            connection = self.connections.pop()
+        except IndexError:
+            connection = self._produce_connection()
+        return connection
+
+    def _put_connection_back(self, conn):
+        assert isinstance(conn, redis.StrictRedis)
+        self.connections.append(conn)
 
     def __repr__(self):
         return "RedisInfo<host=%s,port=%s,db=%d>" % (
             self.host, self.port, self.db)
+
+    def __getattr__(self, name):
+        """Execute redis commands filter by *COMMADNS* """
+        if name not in COMMANDS:
+            raise RuntimeError('Command {!r} not support'.format(name))
+        connection = self._get_connection()
+        return getattr(connection, name)
